@@ -1,13 +1,13 @@
 import initLayout                       from "@flourish/layout";
 
 import NetworkCanvas                    from './modules/network-canvas'
-import NetworkSvg                       from './modules/network-svg'
 import Network                          from './modules/network'
 import {sortData}                       from './utils/helpers'
 
 export var data = {};
 var bubbles;
 var $network_container;
+var networkCanvas;
 
 export var state = {
   // The current state of template. You can make some or all of the properties
@@ -25,8 +25,10 @@ export var state = {
   key_colors_selected: { color_1: '#0c2e6d', color_2: '#901772' },
   line_color:          "#cccccc",
   line_color_selected: "#888888",
-  current_bubble: null,
-  layout: {}
+  layout: {},
+
+  selected_entry: null,
+  selected_id: null
 };
 
 export var layout = initLayout(state.layout);
@@ -38,18 +40,15 @@ function setDetailText(){
     const linkedIds = $activeCountry.data(modeString).toString().split(',')
     const linkedValues = $activeCountry.data(`${modeString}Values`).toString().split(',')
 
-    console.log(state.mode)
-    console.log(modeString)
-
     if( state.mode === 0){
       let activeTotalText = `${$activeCountry.data('totalSent')} `
-      activeTotalText +=  $activeCountry.data('totalSent') > 1 ? state.text_after_total.tat_1 : text_after_total_singular.tats_1;
+      activeTotalText +=  $activeCountry.data('totalSent') > 1 ? state.text_after_total.tat_1 : state.text_after_total_singular.tats_1;
       activeTotalText += linkedIds.length > 1 ? ` ${linkedIds.length} ${state.main_bubble_text.many}` : ` ${linkedIds.length} ${state.main_bubble_text.one}`
       $('.network__active__total').text(activeTotalText)
 
     } else {
       let activeTotalText = `${$activeCountry.data('totalReceived')} `
-      activeTotalText +=  $activeCountry.data('totalReceived') > 1 ? state.text_after_total.tat_2 : text_after_total_singular.tats_2;
+      activeTotalText +=  $activeCountry.data('totalReceived') > 1 ? state.text_after_total.tat_2 : state.text_after_total_singular.tats_2;
       activeTotalText += linkedIds.length > 1 ? ` ${linkedIds.length} ${state.main_bubble_text.many}` : ` ${linkedIds.length} ${state.main_bubble_text.one}`
       $('.network__active__total').text(activeTotalText)
     }
@@ -71,16 +70,11 @@ function setSource(){
 }
 
 export function update() {
-  // The update function is called whenever the user changes a data table or settings
-  // in the visualisation editor, or when changing slides in the story editor.
-
-  // Tip: to make your template work nicely in the story editor, ensure that all user
-  // interface controls such as buttons and sliders update the state and then call update.
-
   if (!data.bubbles.processed) { // If data has changed, draw the canvas again
     draw();
     return;
   }
+  
   layout.update();
 
   $('#network').css('background', state.color_background)
@@ -109,9 +103,12 @@ export function update() {
 
   $('.network__sending:hover').css('background', state.key_colors_selected.color_1)
   $('.network__receiving:hover').css('background', state.key_colors_selected.color_2)
-  $('.network__entry' + '#' + state.current_bubble).addClass('active');
+
   setDetailText()
   setSource();
+
+  if (state.selected_id != null) networkCanvas.select();
+  else networkCanvas.deselect();
 
   layout.setHeight($network_container.height())
 }
@@ -148,15 +145,9 @@ export function draw() {
   data.bubbles.processed = true;
 
   if ($network.length > 0) {
-    if ($network.data('svg') === true) {
-      const networkSvg = new NetworkSvg(sortedData)
-      networkSvg.init()
-    } else {
-      const networkCanvas = new NetworkCanvas(sortedData)
+      networkCanvas = new NetworkCanvas(sortedData)
       networkCanvas.init()
-    }
   }
-
 
   window.addEventListener("resize", update)
   update();

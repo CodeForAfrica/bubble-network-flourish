@@ -2,7 +2,7 @@ import * as d3                          from 'd3'
 import Network                          from './network'
 import { hexToRGB }                     from '../utils/helpers'
 import throttle                         from '../utils/throttle'
-import { state, layout }                from '../index.js'
+import { state, layout, update }                from '../index.js'
 
 class NetworkCanvas extends Network {
     constructor(data) {
@@ -55,7 +55,7 @@ class NetworkCanvas extends Network {
     databind() {
         let column_count = 100 / Math.round((this.entryWidth / this.width) * 100)
         let join = this.custom.selectAll('custom.line')
-            .data(this.linesArray)
+            .data(this.linesArray);
 
         const canvasLeft = this.$canvas.offset().left
 
@@ -138,17 +138,23 @@ class NetworkCanvas extends Network {
     mouseEnter($entry) {
         let colorsHover = Object.values(state.key_colors_selected)
         const id = $entry.data('id')
-        $entry.find('.network__sending, .network__receiving').css('background', colorsHover[this.mode])
+        $entry.find('.network__sending, .network__receiving').css('background', colorsHover[state.mode])
 
         for(let i = 0; i < this.linesArray.length; i++) {
             let entry = this.linesArray[i]
-            if (this.mode === 0) {
+            if (state.mode === 0) {
                 if (entry.from === id || (entry.to === id && entry.bilateral)) {
                     this.linesArray[i].status = 'active'
+                }
+                else {
+                    this.linesArray[i].status = null
                 }
             } else {
                 if (entry.to === id || (entry.from === id && entry.bilateral)) {
                     this.linesArray[i].status = 'active'
+                }
+                else {
+                    this.linesArray[i].status = null
                 }
             }
         }
@@ -158,7 +164,7 @@ class NetworkCanvas extends Network {
 
     mouseLeave() {
         let colors = Object.values(state.key_colors)
-        this.$circles.css('background', colors[this.mode])
+        this.$circles.css('background', colors[state.mode])
         for(let i = 0; i < this.linesArray.length; i++) {
             if (this.linesArray[i].status !== 'hidden') {
                 this.linesArray[i].status = 'neutral'
@@ -178,33 +184,52 @@ class NetworkCanvas extends Network {
         })
 
         this.$entries.on('click.select', (e) => {
-            const $entry = $(e.currentTarget).addClass('active')
-            const id = $entry.data('id')
+            if (state.selected_id != null) return;
+            const id = $(e.currentTarget).data('id')
 
-            super.click($entry, id)
+            state.selected_entry = e.currentTarget.id;
+            state.selected_id = id;
 
-            for(let i = 0; i < this.linesArray.length; i++) {
-                const d = this.linesArray[i]
-                if(this.mode === 0) {
-                    if (d.from !== id && (d.to !== id || !d.bilateral)) {
-                        this.linesArray[i].status = 'hidden'
-                    }
-                } else {
-                    if (d.to !== id && (d.from !== id || !d.bilateral)) {
-                        this.linesArray[i].status = 'hidden'
-                    }
+            update();
+        })
+    }
+
+    select() {
+        $("#" + state.selected_entry).addClass('active');
+        super.click()
+
+        for(let i = 0; i < this.linesArray.length; i++) {
+            const d = this.linesArray[i]
+            if(state.mode === 0) {
+                if (d.from !== state.selected_id && (d.to !== state.selected_id || !d.bilateral)) {
+                    d.status = 'hidden'
+                }
+                else {
+                    d.status = 'active'
+                }
+            } else {
+                if (d.to !== state.selected_id && (d.from !== state.selected_id || !d.bilateral)) {
+                    this.linesArray[i].status = 'hidden'
+                }
+                else {
+                    d.status = 'active'
                 }
             }
+        }
 
-            this.refreshCanvas()
+        this.refreshCanvas()
 
-            this.$active.on('click.deselect', () => {
-                this.deselect()
-            })
+        this.$active.on('click.deselect', () => {
+            state.selected_entry = null;
+            state.selected_id = null;
 
-            $('.network__entry.hide').on('click.deselect', () => {
-                this.deselect()
-            })
+            update();
+        })
+
+        $('.network__entry.hide').on('click.deselect', () => {
+            state.selected_entry = null;
+            state.selected_id = null;
+            update();
         })
     }
 

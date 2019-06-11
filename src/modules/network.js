@@ -26,7 +26,6 @@ class Network {
         this.colorLinesHover = null
         this.width = layout.getPrimaryWidth()
         this.height = this.$container.outerHeight()
-        this.mode = 0
         this.$window = $(window)
         this.colors = Object.values(state.key_colors)
         this.colorsHover = Object.values(state.key_colors_selected)
@@ -89,7 +88,6 @@ class Network {
 
         for (let i = 0; i < keys; i++) {
             this.colors = Object.values(state.key_colors)
-            console.log(this.colors)
             let active = ''
             let style = `border-color: ${this.colors[i]};`
             let circleStyle = `background: ${this.colors[i]};`
@@ -194,7 +192,7 @@ class Network {
         this.height = this.$container.outerHeight()
     }
 
-    click($entry, id) {
+    click() {
         this.$entries.off('mouseenter')
         this.$entries.off('mouseleave')
         this.$entries.off('click.select')
@@ -204,31 +202,42 @@ class Network {
         let main_bubble_text = state.main_bubble_text
         let text_after_total = Object.values(state.text_after_total)
 
-        const $activeCountry = $(`#entry-${id}`)
-        const modeString = this.mode === 0 ? 'receiving' : 'sending'
-        const linkedIds = $activeCountry.data(modeString).toString().split(',')
+        const $activeCountry = $(`#entry-${state.selected_id}`)
+        const modeString = state.mode === 0 ? 'receiving' : 'sending'
+        const linkedIds = $activeCountry.data(modeString).toString().split(',');
         const linkedValues = $activeCountry.data(`${modeString}Values`).toString().split(',')
 
-        this.$activeName.text($entry.data('name'))
-        if (this.mode === 0) {
-            let activeTotalText = `${numberWithCommas($entry.data('totalSent'))} `
-            activeTotalText += $entry.data('totalSent') > 1 ? text_after_total[0] : this.$network.data('textAfterTotalSingular')[0]
+        var selected_entry = $("#" + state.selected_entry);
+
+        this.$activeName.text(selected_entry.data('name'))
+        if (state.mode === 0) {
+            let activeTotalText = `${numberWithCommas(selected_entry.data('totalSent'))} `
+            activeTotalText += selected_entry.data('totalSent') > 1 ? text_after_total[0] : this.$network.data('textAfterTotalSingular')[0]
             activeTotalText += linkedIds.length > 1 ? ` ${linkedIds.length} ${main_bubble_text.many}` : ` ${linkedIds.length} ${main_bubble_text.one}`
             this.$activeTotal.text(activeTotalText)
         } else {
-            let activeTotalText = `${numberWithCommas($entry.data('totalReceived'))} `
-            activeTotalText += $entry.data('totalSent') > 1 ? text_after_total[1] : this.$network.data('textAfterTotalSingular')[1]
+            let activeTotalText = `${numberWithCommas(selected_entry.data('totalReceived'))} `
+            activeTotalText += selected_entry.data('totalSent') > 1 ? text_after_total[1] : this.$network.data('textAfterTotalSingular')[1]
             activeTotalText += linkedIds.length > 1 ? ` ${linkedIds.length} ${main_bubble_text.many}` : ` ${linkedIds.length}  ${main_bubble_text.one}`
             this.$activeTotal.text(activeTotalText)
         }
-        this.$active.addClass('active')
+        this.$active.removeClass('hide').removeClass('linked').addClass('active')
         this.$instructions.addClass('hide')
         this.$key.addClass('hide')
-        this.$entries.not(`#entry-${id}`).addClass('hide')
+
+        this.$entries.removeClass('hide').removeClass('linked');
+        this.$entries.not(`#entry-${state.selected_id}`).addClass('hide')
             .find('.network__sending, .network__receiving').css({
                 'width': 0,
                 'height': 0
             })
+
+        var circleWidth = this.entryWidth * Math.sqrt($activeCountry.data(state.mode === 0 ? 'totalSent' : 'totalReceived') / this.maxTotal);
+        $activeCountry.find('.network__sending, .network__receiving').css({
+            'width': circleWidth,
+            'height': circleWidth,
+            'background': this.colors[state.mode]
+        })
 
         $.each(linkedIds, (index, entryId) => {
             const $linkedCountry = $(`#entry-${entryId}`)
@@ -238,18 +247,17 @@ class Network {
             $linkedCountry.find('.network__sending, .network__receiving').css({
                 'width': linkedWidth,
                 'height': linkedWidth,
-                'background': this.colors[1 - this.mode]
+                'background': this.colors[1 - state.mode]
             })
         })
-
-        // Set the currently selected country in the state object
-        state.current_bubble = $('.network__entry.active').attr('id');
-        
     }
 
     deselect() {
+        this.$entries.off('mouseenter')
+        this.$entries.off('mouseleave')
         this.$entries.off('click.select')
-        this.$active.off('click.deselect')
+        this.$entries.off('click.deselect')
+
         $('.network__entry.hide').off('click.deselect')
         this.$active.removeClass('active')
         this.$entries.removeClass('hide linked active')
@@ -260,13 +268,13 @@ class Network {
             const $circle = $(element)
             const $entry = $circle.parents('.network__entry')
             let circleWidth = this.entryWidth * Math.sqrt($entry.data('totalReceived') / this.maxTotal)
-            if (this.mode === 0) {
+            if (state.mode === 0) {
                 circleWidth = this.entryWidth * Math.sqrt($entry.data('totalSent') / this.maxTotal)
             }
             $circle.css({
                 'width': circleWidth,
                 'height': circleWidth,
-                'background': this.colors[this.mode]
+                'background': this.colors[state.mode]
             })
         })
     }
@@ -328,10 +336,9 @@ class Network {
     }
 
     switchMode() {
-
         this.colors = Object.values(state.key_colors)
 
-        if (this.mode === 0) {
+        if (state.mode === 0) {
             this.$activeTotal.css('color', this.colors[1])
             this.$circles.removeClass('network__sending').addClass('network__receiving')
             this.$circles.each((index, element) => {
@@ -341,7 +348,7 @@ class Network {
                 $circle.css({
                     'width': receivingWidth,
                     'height': receivingWidth,
-                    'background': this.colors[1 - this.mode]
+                    'background': this.colors[1 - state.mode]
                 })
             })
         } else {
@@ -354,14 +361,12 @@ class Network {
                 $circle.css({
                     'width': sendingWidth,
                     'height': sendingWidth,
-                    'background': this.colors[1 - this.mode]
+                    'background': this.colors[1 - state.mode]
                 })
             })
         }
 
-        this.mode = 1 - this.mode
-
-        state.mode = this.mode
+        state.mode = 1 - state.mode
     }
 }
 
