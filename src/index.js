@@ -8,6 +8,7 @@ export var data = {};
 var bubbles;
 var $network_container;
 var networkCanvas;
+var previously_selected;
 
 export var state = {
   // The current state of template. You can make some or all of the properties
@@ -108,7 +109,9 @@ export function update() {
   setSource();
 
   if (state.selected_id != null) networkCanvas.select();
-  else networkCanvas.deselect();
+  else if (state.selected_id == null && previously_selected != null) networkCanvas.deselect();
+
+  previously_selected = state.selected_id;
 
   layout.setHeight($network_container.height())
 }
