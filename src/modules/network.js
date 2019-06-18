@@ -1,5 +1,5 @@
 import { numberWithCommas }             from '../utils/helpers'
-import { state, layout }                        from '../index.js'
+import { state, layout, update }                        from '../index.js'
 
 class Network {
     constructor() {
@@ -42,33 +42,11 @@ class Network {
     }
 
     setupKey() {
-        this.colors = Object.values(state.key_colors)
-        this.$keyItems.on('mouseenter', (e) => {
-            const $item = $(e.currentTarget)
-            if (!$item.hasClass('active')) {
-                $item.css({
-                    'background': this.colors[$item.index()],
-                    'color': '#FFFFFF'
-                })
-
-                $item.find('.network__key-circle').css('background', '#FFFFFF')
-            }
-        })
-
-        this.$keyItems.on('mouseleave', (e) => {
-            const $item = $(e.currentTarget)
-            if (!$item.hasClass('active')) {
-                $item.removeAttr('style')
-                $item.css('border-color', this.colors[$item.index()])
-                $item.find('.network__key-circle').css('background', this.colors[$item.index()])
-            }
-        })
-
         this.$keyItems.on('click', this.switchKey.bind(this))
     }
 
     addMarkup() {
-        const keys = 2
+        const keys = ["sending", "receiving"]
         var titles = Object.values(state.key_labels)
 
         this.colors = Object.values(state.key_colors)
@@ -86,18 +64,9 @@ class Network {
 
         const $legend = $('<div class="network__legend"></div>').appendTo('.network__active')
 
-        for (let i = 0; i < keys; i++) {
-            this.colors = Object.values(state.key_colors)
-            let active = ''
-            let style = `border-color: ${this.colors[i]};`
-            let circleStyle = `background: ${this.colors[i]};`
-            if (i === 0) {
-                active = 'active'
-                style = `background: ${this.colors[i]}; color: #FFFFFF;`
-                circleStyle = 'background: #FFFFFF;'
-            }
-            this.$key.append(`<a class="network__key-item ${active}" style="${style}"><span class="network__key-circle" style="${circleStyle}"></span><span class="network__key-text">${titles[i]}</span></a>`)
-            $legend.append(`<span class="network__legend-item"><span class="network__legend-circle" style="background: ${this.colors[i]}"></span><span class="network__key-text">${titles[i]}</span></span>`)
+        for (let i = 0; i < keys.length; i++) {
+            this.$key.append(`<a class="network__key-item ${keys[i]}"><span class="network__key-circle"></span><span class="network__key-text"></span></a>`)
+            $legend.append(`<span class="network__legend-item ${keys[i]}"><span class="network__legend-circle"></span><span class="network__key-text"></span></span>`)
         }
         this.$keyItems = $('.network__key-item')
 
@@ -112,7 +81,7 @@ class Network {
 
     addEntries() {
         $.each(this.data, (index, entry) => {
-            const $entryDiv = $(`<div><span class="network__name">${entry.name}</span><span class="network__count"></span><span class="network__sending" style="background: ${this.colors[0]}"></span></div>`)
+            const $entryDiv = $(`<div><span class="network__name">${entry.name}</span><span class="network__count"></span><span class="network__sending"></span></div>`)
             $entryDiv.addClass('network__entry')
             $entryDiv.attr('id', 'entry-' + entry.id)
             $entryDiv.attr('data-total-sent', entry.total_sent)
@@ -204,23 +173,14 @@ class Network {
 
         const $activeCountry = $(`#entry-${state.selected_id}`)
         const modeString = state.mode === 0 ? 'receiving' : 'sending'
-        const linkedIds = $activeCountry.data(modeString).toString().split(',');
-        const linkedValues = $activeCountry.data(`${modeString}Values`).toString().split(',')
+        const linkedIds = $activeCountry.data(modeString).toString() ? $activeCountry.data(modeString).toString().split(',') : []
+        const linkedValues = $activeCountry.data(`${modeString}Values`).toString() ? $activeCountry.data(`${modeString}Values`).toString().split(',') : []
+
+        console.log(linkedIds, linkedValues)
 
         var selected_entry = $("#" + state.selected_entry);
 
         this.$activeName.text(selected_entry.data('name'))
-        if (state.mode === 0) {
-            let activeTotalText = `${numberWithCommas(selected_entry.data('totalSent'))} `
-            activeTotalText += selected_entry.data('totalSent') > 1 ? text_after_total[0] : this.$network.data('textAfterTotalSingular')[0]
-            activeTotalText += linkedIds.length > 1 ? ` ${linkedIds.length} ${main_bubble_text.many}` : ` ${linkedIds.length} ${main_bubble_text.one}`
-            this.$activeTotal.text(activeTotalText)
-        } else {
-            let activeTotalText = `${numberWithCommas(selected_entry.data('totalReceived'))} `
-            activeTotalText += selected_entry.data('totalSent') > 1 ? text_after_total[1] : this.$network.data('textAfterTotalSingular')[1]
-            activeTotalText += linkedIds.length > 1 ? ` ${linkedIds.length} ${main_bubble_text.many}` : ` ${linkedIds.length}  ${main_bubble_text.one}`
-            this.$activeTotal.text(activeTotalText)
-        }
         this.$active.removeClass('hide').removeClass('linked').addClass('active')
         this.$instructions.addClass('hide')
         this.$key.addClass('hide')
@@ -235,8 +195,7 @@ class Network {
         var circleWidth = this.entryWidth * Math.sqrt($activeCountry.data(state.mode === 0 ? 'totalSent' : 'totalReceived') / this.maxTotal);
         $activeCountry.find('.network__sending, .network__receiving').css({
             'width': circleWidth,
-            'height': circleWidth,
-            'background': this.colors[state.mode]
+            'height': circleWidth
         })
 
         $.each(linkedIds, (index, entryId) => {
@@ -246,8 +205,7 @@ class Network {
             const linkedWidth = this.entryWidth * Math.sqrt(linkedValues[index] / this.maxTotal)
             $linkedCountry.find('.network__sending, .network__receiving').css({
                 'width': linkedWidth,
-                'height': linkedWidth,
-                'background': this.colors[1 - state.mode]
+                'height': linkedWidth
             })
         })
     }
@@ -273,30 +231,12 @@ class Network {
             }
             $circle.css({
                 'width': circleWidth,
-                'height': circleWidth,
-                'background': this.colors[state.mode]
+                'height': circleWidth
             })
         })
     }
 
     switchKey(e) {
-        const $TARGET = $(e.currentTarget)
-        this.colors = Object.values(state.key_colors)
-        if ($TARGET.hasClass('active')) {
-            return
-        }
-
-        const $active = $TARGET.siblings('.active')
-        $active.removeAttr('style')
-        $active.css('border-color', this.colors[$active.index()])
-        $active.find('.network__key-circle').css('background', this.colors[$active.index()])
-        $TARGET.addClass('active').siblings().removeClass('active')
-        $TARGET.css({
-            'background': this.colors[$TARGET.index()],
-            'color': '#FFFFFF'
-        })
-        $TARGET.find('.network__key-circle').css('background', '#FFFFFF')
-
         this.switchMode()
     }
 
@@ -347,8 +287,7 @@ class Network {
                 const receivingWidth = this.entryWidth * Math.sqrt($entry.data('totalReceived') / this.maxTotal)
                 $circle.css({
                     'width': receivingWidth,
-                    'height': receivingWidth,
-                    'background': this.colors[1 - state.mode]
+                    'height': receivingWidth
                 })
             })
         } else {
@@ -360,13 +299,14 @@ class Network {
                 const sendingWidth = this.entryWidth * Math.sqrt($entry.data('totalSent') / this.maxTotal)
                 $circle.css({
                     'width': sendingWidth,
-                    'height': sendingWidth,
-                    'background': this.colors[1 - state.mode]
+                    'height': sendingWidth
                 })
             })
         }
 
         state.mode = 1 - state.mode
+        state.selected_key = state.mode === 0 ? "sending" : "receiving"
+        update()
     }
 }
 

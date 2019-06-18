@@ -8,7 +8,7 @@ export var data = {};
 var bubbles;
 var $network_container;
 var networkCanvas;
-var previously_selected;
+var previously_selected, previous_line_color, previous_line_color_selected;
 
 export var state = {
   // The current state of template. You can make some or all of the properties
@@ -29,7 +29,8 @@ export var state = {
   layout: {},
 
   selected_entry: null,
-  selected_id: null
+  selected_id: null,
+  selected_key: "sending"
 };
 
 export var layout = initLayout(state.layout);
@@ -38,34 +39,20 @@ function setDetailText(){
   if($('.network__entry.active').length > 0){
     const $activeCountry = $('.network__entry.active');
     const modeString = state.mode === 0 ? 'receiving' : 'sending'
-    const linkedIds = $activeCountry.data(modeString).toString().split(',')
-    const linkedValues = $activeCountry.data(`${modeString}Values`).toString().split(',')
+    const linkedIds = $activeCountry.data(modeString).toString() != "" ? $activeCountry.data(modeString).toString().split(',') : []
+    const linkedValues = $activeCountry.data(modeString).toString() != "" ? $activeCountry.data(`${modeString}Values`).toString().split(',') : []
 
     if( state.mode === 0){
       let activeTotalText = `${$activeCountry.data('totalSent')} `
-      activeTotalText +=  $activeCountry.data('totalSent') > 1 ? state.text_after_total.tat_1 : state.text_after_total_singular.tats_1;
-      activeTotalText += linkedIds.length > 1 ? ` ${linkedIds.length} ${state.main_bubble_text.many}` : ` ${linkedIds.length} ${state.main_bubble_text.one}`
+      activeTotalText +=  $activeCountry.data('totalSent') > 1 || $activeCountry.data('totalSent') === 0 ? state.text_after_total.tat_1 : state.text_after_total_singular.tats_1;
+      activeTotalText += linkedIds.length > 1 || linkedIds.length === 0 ? ` ${linkedIds.length} ${state.main_bubble_text.many}` : ` ${linkedIds.length} ${state.main_bubble_text.one}`
       $('.network__active__total').text(activeTotalText)
 
     } else {
       let activeTotalText = `${$activeCountry.data('totalReceived')} `
-      activeTotalText +=  $activeCountry.data('totalReceived') > 1 ? state.text_after_total.tat_2 : state.text_after_total_singular.tats_2;
-      activeTotalText += linkedIds.length > 1 ? ` ${linkedIds.length} ${state.main_bubble_text.many}` : ` ${linkedIds.length} ${state.main_bubble_text.one}`
+      activeTotalText +=  $activeCountry.data('totalReceived') > 1 || $activeCountry.data('totalReceived') === 0 ? state.text_after_total.tat_2 : state.text_after_total_singular.tats_2;
+      activeTotalText += linkedIds.length > 1 || linkedIds.length === 0 ? ` ${linkedIds.length} ${state.main_bubble_text.many}` : ` ${linkedIds.length} ${state.main_bubble_text.one}`
       $('.network__active__total').text(activeTotalText)
-    }
-
-
-  }
-}
-
-function setSource(){
-  if(state.source.label.length > 0){
-    $('.network__source').empty()
-    if(state.source.url.length > 0){
-      $('.network__source').append('<a href="' + state.source.url + '">' + state.source.label + '</a>')
-    }
-    else {
-      $('.network__source').text(state.source.label)
     }
   }
 }
@@ -78,42 +65,60 @@ export function update() {
   
   layout.update();
 
-  $('#network').css('background', state.color_background)
-  $('.network__key-text:eq(0)').text(state.key_labels.label_1)
-  $('.network__key-text:eq(1)').text(state.key_labels.label_2)
-
-  $('.network__key-item:eq(0)').css( {'border-color': state.key_colors.color_1, 'color': state.key_colors.color_1 })
-  $('.network__key-item:eq(0) > .network__key-circle').css('background',function() {
-    return this.parentElement.className.indexOf("active") ? null : state.key_colors.color_1
-  })
-  $('.network__key-item:eq(0).active').css( {'background': state.key_colors.color_1, 'color': '#FFFFFF' })
-
-  $('.network__key-item:eq(1)').css( {'border-color': state.key_colors.color_2, 'color': state.key_colors.color_2 })
-  $('.network__key-item:eq(1) > .network__key-circle').css('background', function() {
-    return this.parentElement.className.indexOf("active") ? null : state.key_colors.color_2
-  })
-  $('.network__key-item:eq(1).active').css( {'background': state.key_colors.color_2, 'color': '#FFFFFF' })
-
-  $('.network__legend-circle:eq(0)').css('background', state.key_colors.color_1)
-  $('.network__legend-circle:eq(1)').css('background', state.key_colors.color_2)
-
-  $('.network__instruction').text(state.instruction)
-
-  $('.network__sending').css('background', state.key_colors.color_1)
-  $('.network__receiving').css('background', state.key_colors.color_2)
-
-  $('.network__sending:hover').css('background', state.key_colors_selected.color_1)
-  $('.network__receiving:hover').css('background', state.key_colors_selected.color_2)
-
-  setDetailText()
-  setSource();
-
   if (state.selected_id != null) networkCanvas.select();
   else if (state.selected_id == null && previously_selected != null) networkCanvas.deselect();
 
+  updateButtons();
+  setDetailText()
+
+  $('.network__sending').css('background', !state.selected_entry ? state.key_colors.color_1 : state.key_colors.color_2)
+  $('.network__receiving').css('background', !state.selected_entry ? state.key_colors.color_2 : state.key_colors.color_1)
+  
+  $('.network__sending:hover').css('background', state.selected_entry ? state.key_colors_selected.color_2 : state.key_colors_selected.color_1)
+  $('.network__receiving:hover').css('background', state.selected_entry ? state.key_colors_selected.color_1 : state.key_colors_selected.color_2)
+
+  $('.active .network__sending').css('background', state.key_colors.color_1)
+  $('.active .network__receiving').css('background', state.key_colors.color_2)
+
+  if (previous_line_color != state.line_color || previous_line_color_selected != state.line_color_selected) networkCanvas.refreshCanvas();
+
   previously_selected = state.selected_id;
+  previous_line_color = state.line_color;
+  previous_line_color_selected = state.line_color_selected;
 
   layout.setHeight($network_container.height())
+}
+
+function updateButtons() {
+  var $btn_sending = $('.network__key-item.sending');
+  var $btn_receiving = $('.network__key-item.receiving');
+
+  $btn_sending.css({
+    'border-color': state.key_colors.color_1,
+    'background': state.selected_key == "sending" ? state.key_colors.color_1 : "transparent",
+    'color': state.selected_key == "sending" ? "#ffffff" : state.key_colors.color_1
+  })
+  $btn_sending.find('.network__key-text').text(state.key_labels.label_1)
+  $btn_sending.find('.network__key-circle').css('background', state.selected_key == "sending" ? "#ffffff" : state.key_colors.color_1)
+
+  $btn_receiving.css({
+    'border-color': state.key_colors.color_2,
+    'background': state.selected_key == "receiving" ? state.key_colors.color_2 : "transparent",
+    'color': state.selected_key == "receiving" ? "#ffffff" : state.key_colors.color_2
+  })
+
+  $btn_receiving.find('.network__key-text').text(state.key_labels.label_2)
+  $btn_receiving.find('.network__key-circle').css('background', state.selected_key == "receiving" ? "#ffffff" : state.key_colors.color_2)
+
+  $(".network__legend-item.sending .network__legend-circle").css("background-color", state.key_colors.color_1)
+  $(".network__legend-item.sending .network__key-text").text(state.key_labels.label_1)
+
+  $(".network__legend-item.receiving .network__legend-circle").css("background-color", state.key_colors.color_2)
+  $(".network__legend-item.receiving .network__key-text").text(state.key_labels.label_2)
+  
+  $('.network__instruction').text(state.instruction)
+
+  $('.network__active__total').css('color', state.selected_key == "sending" ? state.key_colors.color_1 : state.key_colors.color_2)
 }
 
 export function draw() {
@@ -133,10 +138,7 @@ export function draw() {
   $network.attr('data-color-background', "#EAEAEA")
   $network.attr('data-instructions', "Click on a country to see migration flow")
 
-  var $network_source = $('<div class="network__source"></div>');
-
   $network_container.append($network);
-  $network_container.append($network_source);
 
   $(layout.getSection('primary')).append($network_container);
 

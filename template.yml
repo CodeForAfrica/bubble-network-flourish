@@ -13,27 +13,61 @@ build:
     script: npm run less
     directory: less
 settings:
-  - Labels
+  - Colors
+  - property: key_colors.color_1
+    name: Primary
+    description: Used for "sending" nodes
+    type: color
+    width: half
+  - property: key_colors_selected.color_1
+    name: Hover
+    type: color
+    width: half
+  - property: key_colors.color_2
+    name: Secondary
+    description: Used for "receiving" nodes
+    type: color
+    width: half
+  - property: key_colors_selected.color_2
+    name: Hover
+    description: Second Key Color on hover (legend and bubbles) (hex)
+    type: color
+    width: half
+  - property: line_color
+    name: Line color
+    type: color
+    width: half
+  - property: line_color_selected
+    name: Hover
+    type: color
+    width: half
+
+
+  - Text & translation
   - property: key_labels.label_1
-    name: Key Label (1)
+    name: Sending
     description: label for the first key
     type: string
+    width: half
   - property: key_labels.label_2
-    name: Key Label (2)
+    name: Receiving
     description: label for the second key
     type: string
+    width: half
   - property: instruction
     name: Instruction
     description: Choose the main call to action
     type: string
   - property: main_bubble_text.one
-    name: Main Bubbble Descriptor (singular)
+    name: Entity name (singular)
     description: What are these bubbles representing?
     type: string
+    width: half
   - property: main_bubble_text.many
-    name: Main Bubbble Descriptor (plural)
+    name: Entity name (plural)
     description: What are these bubbles representing?
     type: string
+    width: half
   - property: text_after_total.tat_1
     name: Detail description (towards)
     description: Description label of the detail node (towards)
@@ -42,40 +76,6 @@ settings:
     name: Detail description (from)
     description: Description label of the detail node (from).
     type: string
-  - property: source.label
-    name: Source
-    description: The source of the data (if any)
-    type: string
-  - property: source.url
-    name: Source url
-    description: Url of the source data (with http)
-    type: string
-
-  - Colors
-  - property: key_colors.color_1
-    name: First Key Color
-    description: First Key Color (legend and bubbles) (hex)
-    type: color
-  - property: key_colors.color_2
-    name: Second Key Color
-    description: Second Key Color (legend and bubbles) (hex)
-    type: color
-
-  - property: key_colors_selected.color_1
-    name: First Key Color Hover
-    description: First Key Color on hover (legend and bubbles) (hex)
-    type: color
-  - property: key_colors_selected.color_2
-    name: Second Key Color Hover
-    description: Second Key Color on hover (legend and bubbles) (hex)
-    type: color
-
-  - property: line_color
-    name: Line color
-    type: color
-  - property: line_color_selected
-    name: Line color Hover
-    type: color
 
   - Layout
   - property: layout

@@ -83,16 +83,11 @@ class NetworkCanvas extends Network {
             })
             .attr('stroke-width', 1)
             .attr('stroke', (d) => {
-                let color = this.colorLines
-                if (d.status === 'active') {
-                    color = this.colorLinesHover
-                    
-                }
+                let color = state.line_color
+                if (d.status === 'active') color = state.line_color_selected
 
                 let opacity = 1
-                if (d.status === 'hidden') {
-                    opacity = 0
-                }
+                if (d.status === 'hidden') opacity = 0
 
                 return hexToRGB(color, opacity)
             })
@@ -138,7 +133,6 @@ class NetworkCanvas extends Network {
     mouseEnter($entry) {
         let colorsHover = Object.values(state.key_colors_selected)
         const id = $entry.data('id')
-        $entry.find('.network__sending, .network__receiving').css('background', colorsHover[state.mode])
 
         for(let i = 0; i < this.linesArray.length; i++) {
             let entry = this.linesArray[i]
@@ -164,7 +158,6 @@ class NetworkCanvas extends Network {
 
     mouseLeave() {
         let colors = Object.values(state.key_colors)
-        this.$circles.css('background', colors[state.mode])
         for(let i = 0; i < this.linesArray.length; i++) {
             if (this.linesArray[i].status !== 'hidden') {
                 this.linesArray[i].status = 'neutral'
