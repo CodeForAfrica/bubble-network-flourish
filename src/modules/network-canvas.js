@@ -53,7 +53,7 @@ class NetworkCanvas extends Network {
     }
 
     databind() {
-        let column_count = 100 / Math.round((this.entryWidth / this.width) * 100)
+        let column_count = Math.round((this.width / this.entryWidth));
         let join = this.custom.selectAll('custom.line')
             .data(this.linesArray);
 
