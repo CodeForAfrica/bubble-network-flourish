@@ -8,7 +8,7 @@ export var data = {};
 var bubbles;
 var $network_container;
 var networkCanvas;
-var previously_selected, previous_line_color, previous_line_color_selected;
+var previously_selected, previous_line_color, previous_line_color_selected, previous_key;
 
 export var state = {
   // The current state of template. You can make some or all of the properties
@@ -38,13 +38,13 @@ export var state = {
 export var layout = initLayout(state.layout);
 
 function setDetailText(){
-  if($('.network__entry.active').length > 0){
-    const $activeCountry = $('.network__entry.active');
-    const modeString = state.mode === 0 ? 'receiving' : 'sending'
+  if($('#' + state.selected_entry).length > 0){
+    const $activeCountry = $('#' + state.selected_entry)
+    const modeString = state.selected_key === 'sending' ? 'receiving' : 'sending'
     const linkedIds = $activeCountry.data(modeString).toString() != "" ? $activeCountry.data(modeString).toString().split(',') : []
     const linkedValues = $activeCountry.data(modeString).toString() != "" ? $activeCountry.data(`${modeString}Values`).toString().split(',') : []
 
-    if( state.mode === 0){
+    if( state.selected_key === 'sending'){
       let activeTotalText = `${$activeCountry.data('totalSent')} `
       activeTotalText +=  $activeCountry.data('totalSent') > 1 || $activeCountry.data('totalSent') === 0 ? state.text_after_total.tat_1 : state.text_after_total_singular.tats_1;
       activeTotalText += linkedIds.length > 1 || linkedIds.length === 0 ? ` ${linkedIds.length} ${state.main_bubble_text.many}` : ` ${linkedIds.length} ${state.main_bubble_text.one}`
@@ -67,11 +67,12 @@ export function update() {
   
   layout.update();
 
+  if (previous_key != state.selected_key) networkCanvas.updateCircles()
   if (state.selected_id != null) networkCanvas.select();
   else if (state.selected_id == null && previously_selected != null) networkCanvas.deselect();
 
   updateButtons();
-  setDetailText()
+  setDetailText();
 
   $('.network__sending').css('background', !state.selected_entry ? state.key_colors.color_1 : state.key_colors.color_2)
   $('.network__receiving').css('background', !state.selected_entry ? state.key_colors.color_2 : state.key_colors.color_1)
@@ -87,6 +88,7 @@ export function update() {
   previously_selected = state.selected_id;
   previous_line_color = state.line_color;
   previous_line_color_selected = state.line_color_selected;
+  previous_key = state.selected_key;
 
   layout.setHeight($network_container.height())
 }

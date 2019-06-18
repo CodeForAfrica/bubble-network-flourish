@@ -172,12 +172,9 @@ class Network {
         let text_after_total = Object.values(state.text_after_total)
 
         const $activeCountry = $(`#entry-${state.selected_id}`)
-        const modeString = state.mode === 0 ? 'receiving' : 'sending'
+        const modeString = state.selected_key === 'sending' ? 'receiving' : 'sending'
         const linkedIds = $activeCountry.data(modeString).toString() ? $activeCountry.data(modeString).toString().split(',') : []
         const linkedValues = $activeCountry.data(`${modeString}Values`).toString() ? $activeCountry.data(`${modeString}Values`).toString().split(',') : []
-
-        console.log(linkedIds, linkedValues)
-
         var selected_entry = $("#" + state.selected_entry);
 
         this.$activeName.text(selected_entry.data('name'))
@@ -192,7 +189,7 @@ class Network {
                 'height': 0
             })
 
-        var circleWidth = this.entryWidth * Math.sqrt($activeCountry.data(state.mode === 0 ? 'totalSent' : 'totalReceived') / this.maxTotal);
+        var circleWidth = this.entryWidth * Math.sqrt($activeCountry.data(state.selected_key === 'sending' ? 'totalSent' : 'totalReceived') / this.maxTotal);
         $activeCountry.find('.network__sending, .network__receiving').css({
             'width': circleWidth,
             'height': circleWidth
@@ -226,7 +223,7 @@ class Network {
             const $circle = $(element)
             const $entry = $circle.parents('.network__entry')
             let circleWidth = this.entryWidth * Math.sqrt($entry.data('totalReceived') / this.maxTotal)
-            if (state.mode === 0) {
+            if (state.selected_key === 'sending') {
                 circleWidth = this.entryWidth * Math.sqrt($entry.data('totalSent') / this.maxTotal)
             }
             $circle.css({
@@ -237,7 +234,11 @@ class Network {
     }
 
     switchKey(e) {
-        this.switchMode()
+        var target_key = e.currentTarget.className.indexOf("receiving") > 0 ? "receiving" : "sending";
+        if (target_key != state.selected_key) {
+            state.selected_key = target_key;
+            this.switchMode();
+        }
     }
 
     resize() {
@@ -276,38 +277,25 @@ class Network {
     }
 
     switchMode() {
-        this.colors = Object.values(state.key_colors)
-
-        if (state.mode === 0) {
-            this.$activeTotal.css('color', this.colors[1])
-            this.$circles.removeClass('network__sending').addClass('network__receiving')
-            this.$circles.each((index, element) => {
-                const $circle = $(element)
-                const $entry = $circle.parents('.network__entry')
-                const receivingWidth = this.entryWidth * Math.sqrt($entry.data('totalReceived') / this.maxTotal)
-                $circle.css({
-                    'width': receivingWidth,
-                    'height': receivingWidth
-                })
-            })
-        } else {
-            this.$activeTotal.css('color', this.colors[0])
-            this.$circles.addClass('network__sending').removeClass('network__receiving')
-            this.$circles.each((index, element) => {
-                const $circle = $(element)
-                const $entry = $circle.parents('.network__entry')
-                const sendingWidth = this.entryWidth * Math.sqrt($entry.data('totalSent') / this.maxTotal)
-                $circle.css({
-                    'width': sendingWidth,
-                    'height': sendingWidth
-                })
-            })
-        }
-
-        state.mode = 1 - state.mode
-        state.selected_key = state.mode === 0 ? "sending" : "receiving"
-        update()
+        this.updateCircles();
+        update();
     }
+
+    updateCircles() {
+        this.$circles
+            .removeClass(state.selected_key == 'sending' ? 'network__receiving' : 'network__sending')
+            .addClass(state.selected_key == 'sending' ? 'network__sending' : 'network__receiving');
+
+        this.$circles.each((index, element) => {
+            const $circle = $(element)
+            const $entry = $circle.parents('.network__entry')
+            const circleWidth = this.entryWidth * Math.sqrt($entry.data(state.selected_key == 'receiving' ? 'totalReceived' : 'totalSent') / this.maxTotal)
+            $circle.css({
+                'width': circleWidth,
+                'height': circleWidth
+            })
+        })
+    }   
 }
 
 export default Network

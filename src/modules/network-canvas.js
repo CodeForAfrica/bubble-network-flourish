@@ -136,7 +136,7 @@ class NetworkCanvas extends Network {
 
         for(let i = 0; i < this.linesArray.length; i++) {
             let entry = this.linesArray[i]
-            if (state.mode === 0) {
+            if (state.selected_key === 'sending') {
                 if (entry.from === id || (entry.to === id && entry.bilateral)) {
                     this.linesArray[i].status = 'active'
                 }
@@ -193,7 +193,7 @@ class NetworkCanvas extends Network {
 
         for(let i = 0; i < this.linesArray.length; i++) {
             const d = this.linesArray[i]
-            if(state.mode === 0) {
+            if(state.selected_key === 'sending') {
                 if (d.from !== state.selected_id && (d.to !== state.selected_id || !d.bilateral)) {
                     d.status = 'hidden'
                 }
