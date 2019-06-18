@@ -20,13 +20,15 @@ export var state = {
   main_bubble_text: { many: 'countries', one: 'country'},
   text_after_total: {  tat_1: 'transactions sent to', tat_2: 'transactions received from'},
   text_after_total_singular: {  tats_1: 'transaction to', tats_2: 'transaction from'},
-  source: { label: 'Code for Africa', url: 'http://codeforafrica.org' },
 
   key_colors:          { color_1: '#2353aa', color_2: '#ae7ea2' },
   key_colors_selected: { color_1: '#0c2e6d', color_2: '#901772' },
   line_color:          "#cccccc",
   line_color_selected: "#888888",
-  layout: {},
+  layout: {
+    source_name: "Code for Africa",
+    source_url: "http://codeforafrica.org"
+  },
 
   selected_entry: null,
   selected_id: null,
