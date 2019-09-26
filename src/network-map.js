@@ -11,16 +11,9 @@ d3.csv(window.location.origin + '/data/data.csv', (error, rawData) => {
     } else {
         const data = sortData(rawData)
 
-        console.log(data);
-
         if ($network.length > 0) {
-            if ($network.data('svg') === true) {
-                const networkSvg = new NetworkSvg(data)
-                networkSvg.init()
-            } else {
-                const networkCanvas = new NetworkCanvas(data)
-                networkCanvas.init()
-            }
+            const networkCanvas = new NetworkCanvas(data)
+            networkCanvas.init()
         }
     }
 })

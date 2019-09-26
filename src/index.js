@@ -6,7 +6,7 @@ import {sortData}                       from './utils/helpers'
 
 export var data = {};
 var bubbles;
-var $network_container;
+var $network_container, $network;
 var networkCanvas;
 var previously_selected, previous_line_color, previous_line_color_selected, previous_key;
 
@@ -126,25 +126,29 @@ function updateButtons() {
 }
 
 export function draw() {
-  $network_container = $('<div class="network-container">')
-  var $network = $('<div class="network" id="network">');
-  $network.attr('data-key-titles', '["Sending","Receiving"]')
-  $network.attr('data-text-before-total', '["Sends","Receives"]')
-  $network.attr('data-text-after-total', '["transactions to", "transactions from"]')
-  $network.attr('data-text-after-total-singular', '["transaction to", "transaction from"]')
-  $network.attr('data-node-type-text', 'countries')
-  $network.attr('data-node-type-text-singular', 'country')
-  $network.attr('data-svg', 'false')
-  $network.attr('data-key-colors', '["#2353aa","#ae7ea2"]')
-  $network.attr('data-key-colors-selected', '["#0c2e6d","#901772"]')
-  $network.attr('data-color-lines', "#00ffff")
-  $network.attr('data-color-lines-hover', "#ff0000")
-  $network.attr('data-color-background', "#EAEAEA")
-  $network.attr('data-instructions', "Click on a country to see migration flow")
+  if (!$network_container) {
+    $network_container = $network_container || $('<div class="network-container">');
+    $network = $('<div class="network" id="network">');
+    $network.attr('data-key-titles', '["Sending","Receiving"]')
+    $network.attr('data-text-before-total', '["Sends","Receives"]')
+    $network.attr('data-text-after-total', '["transactions to", "transactions from"]')
+    $network.attr('data-text-after-total-singular', '["transaction to", "transaction from"]')
+    $network.attr('data-node-type-text', 'countries')
+    $network.attr('data-node-type-text-singular', 'country')
+    $network.attr('data-svg', 'false')
+    $network.attr('data-key-colors', '["#2353aa","#ae7ea2"]')
+    $network.attr('data-key-colors-selected', '["#0c2e6d","#901772"]')
+    $network.attr('data-color-lines', "#00ffff")
+    $network.attr('data-color-lines-hover', "#ff0000")
+    $network.attr('data-color-background', "#EAEAEA")
+    $network.attr('data-instructions', "Click on a country to see migration flow")
 
-  $network_container.append($network);
+    $network_container.append($network);
 
-  $(layout.getSection('primary')).append($network_container);
+    $(layout.getSection('primary')).append($network_container);
+  }
+
+  $network.html("");
 
   const sortedData = sortData(data.bubbles);
 
@@ -153,7 +157,7 @@ export function draw() {
   // return undefined
   data.bubbles.processed = true;
 
-  if ($network.length > 0) {
+  if ($network_container.length > 0) {
       networkCanvas = new NetworkCanvas(sortedData)
       networkCanvas.init()
   }
