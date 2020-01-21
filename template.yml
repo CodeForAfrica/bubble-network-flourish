@@ -1,6 +1,6 @@
-id: 'cfa-bubble-networks'
-name: Code for Africa - Bubble Networks
-description: A Flourish template
+id: 'bubble-network-cfa'
+name: Bubble Network
+description: A Flourish template made by Code For Africa
 author: Code For Africa
 sdk_version: 3
 build:
