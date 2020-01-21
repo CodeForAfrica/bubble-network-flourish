@@ -1,6 +1,5 @@
-# cfa-bubble-network
-The Code for Africa Bubble Network dataviz ported to the Flourish framework
+# Code for Africa Bubble Network template
 
-[Code for Africa Bubble Networks Repo](https://github.com/CodeForAfrica/bubble-networks)
+To run this, clone the repo and run `flourish run` inside the directory.
 
-[Flourish](https://flourish.studio/)
+For more information, checkout [flourish.studio/developers](https://flourish.studio/developers)
